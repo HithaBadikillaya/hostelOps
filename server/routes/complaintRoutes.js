@@ -5,12 +5,16 @@ const {
     getComplaints,
     updateComplaintStatus,
 } = require('../controllers/complaintController');
+const { protect, authorize } = require('../middleware/authMiddleware');
 
-// All routes are prefixed with /api/complaints
+// All routes are protected
+router.use(protect);
+
 router.route('/')
-    .post(createComplaint)
-    .get(getComplaints);
+    .post(authorize('student', 'admin'), createComplaint)
+    .get(getComplaints); // Filtering logic is inside controller
 
-router.patch('/:id/status', updateComplaintStatus);
+router.route('/:id')
+    .patch(authorize('admin'), updateComplaintStatus);
 
 module.exports = router;

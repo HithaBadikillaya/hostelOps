@@ -3,7 +3,7 @@ const Complaint = require('../models/Complaint');
 /**
  * @desc    Create new complaint
  * @route   POST /api/complaints
- * @access  Private (Assumes req.user is populated by auth middleware)
+ * @access  Private (student + admin allowed as per request)
  */
 const createComplaint = async (req, res, next) => {
     try {
@@ -11,11 +11,11 @@ const createComplaint = async (req, res, next) => {
 
         if (!category || !description) {
             res.status(400);
-            throw new Error('Please add a category and description');
+            return next(new Error('Please provide category and description'));
         }
 
         const complaint = await Complaint.create({
-            user: req.user?._id || req.body.userId, // Fallback to body for now if no auth middleware
+            createdBy: req.user._id,
             category,
             description,
             priority,
@@ -28,13 +28,24 @@ const createComplaint = async (req, res, next) => {
 };
 
 /**
- * @desc    Get all complaints
+ * @desc    Get complaints
  * @route   GET /api/complaints
  * @access  Private
  */
 const getComplaints = async (req, res, next) => {
     try {
-        const complaints = await Complaint.find({}).populate('user', 'name email');
+        let query = {};
+
+        // If student, filter by their own complaints
+        if (req.user.role === 'student') {
+            query = { createdBy: req.user._id };
+        }
+        // If admin, no filter (return all)
+
+        const complaints = await Complaint.find(query)
+            .sort({ createdAt: -1 })
+            .populate('createdBy', 'name email');
+
         res.status(200).json(complaints);
     } catch (error) {
         next(error);
@@ -43,23 +54,24 @@ const getComplaints = async (req, res, next) => {
 
 /**
  * @desc    Update complaint status
- * @route   PATCH /api/complaints/:id/status
+ * @route   PATCH /api/complaints/:id
  * @access  Private/Admin
  */
 const updateComplaintStatus = async (req, res, next) => {
     try {
         const { status } = req.body;
+        const allowedStatuses = ['Pending', 'In Progress', 'Resolved'];
 
-        if (!['Pending', 'In Progress', 'Resolved'].includes(status)) {
+        if (!status || !allowedStatuses.includes(status)) {
             res.status(400);
-            throw new Error('Invalid status');
+            return next(new Error('Please provide a valid status'));
         }
 
         const complaint = await Complaint.findById(req.params.id);
 
         if (!complaint) {
             res.status(404);
-            throw new Error('Complaint not found');
+            return next(new Error('Complaint not found'));
         }
 
         complaint.status = status;
