@@ -2,28 +2,35 @@ version: "3.9"
 
 services:
   mongo:
-    image: mongo
-    container_name: hostelops-mongo
-    ports:
-      - "27017:27017"
+    image: mongo:6.0
     volumes:
       - mongo_data:/data/db
+    restart: always
 
   server:
     build:
       context: ./server
-    container_name: hostelops-server
     ports:
       - "5000:5000"
     depends_on:
       - mongo
+    volumes:
+      - ./server:/app
+      - /app/node_modules
     environment:
       - MONGO_URI=mongodb://mongo:27017/hostelops
       - JWT_SECRET=supersecretkey
       - NODE_ENV=development
-    volumes:
-      - ./server:/app
-      - /app/node_modules
+    restart: always
+
+  client:
+    build:
+      context: ./client
+    ports:
+      - "80:80"
+    depends_on:
+      - server
+    restart: always
 
 volumes:
   mongo_data:
