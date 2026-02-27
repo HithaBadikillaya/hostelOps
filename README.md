@@ -2,7 +2,7 @@
 
 **HostelOps** is a management platform designed to simplify the communication gap between students and administrators. It was built to replace clunky, outdated systems with a fast, real-time solution that actually feels good to use. 
 
-The project features a high-end "architectural" aesthetic—minimalist theme, layouts, and smooth animations, all while keeping the code production-ready and fully containerized.
+The project features a high-end "architectural" minimalist theme, layouts, and smooth animations, all while keeping the code production-ready and fully containerized.
 
 ## Quick Start
 
@@ -34,7 +34,7 @@ Once the build completes, head over to `http://localhost`.
 
 ---
 
-## What’s Under the Hood?
+## Features
 
 - **Real-Time Dashboard**: An administrative console with live status updates and bento-grid analytics.
 - **Architectural UI**: A custom-designed interface using Tailwind CSS, featuring floating backgrounds and a sophisticated brown/white/black palette.
@@ -45,3 +45,4 @@ Once the build completes, head over to `http://localhost`.
 - **Frontend**: React, Vite, Tailwind CSS v4
 - **Backend**: Node.js, Express, MongoDB
 - **Infrastructure**: Docker, Nginx
+
