@@ -18,7 +18,7 @@ const StudentDashboard: React.FC = () => {
 
     const fetchComplaints = async () => {
         try {
-            const response = await api.get('/complaints');
+            const response = await api.get(`/complaints?t=${Date.now()}`);
             setComplaints(response.data);
         } catch (err) {
             console.error('Failed to fetch complaints');
@@ -29,6 +29,11 @@ const StudentDashboard: React.FC = () => {
 
     useEffect(() => {
         fetchComplaints();
+
+        // Dynamic updates: poll every 5 seconds
+        const intervalId = setInterval(fetchComplaints, 5000);
+
+        return () => clearInterval(intervalId);
     }, []);
 
     const handleSubmit = async (e: React.FormEvent) => {

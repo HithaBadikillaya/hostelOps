@@ -18,9 +18,7 @@ const app = express();
 app.use(express.json());
 
 // Dev logging middleware
-if (process.env.NODE_ENV === 'development') {
-    app.use(morgan('dev'));
-}
+app.use(morgan(':method :url :status :res[content-length] - :response-time ms'));
 
 // Security headers
 app.use(helmet());

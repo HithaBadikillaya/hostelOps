@@ -12,7 +12,7 @@ const AdminDashboard: React.FC = () => {
 
     const fetchComplaints = async () => {
         try {
-            const response = await api.get('/complaints');
+            const response = await api.get(`/complaints?t=${Date.now()}`);
             const data = response.data as Complaint[];
             setComplaints(data);
 
@@ -31,6 +31,11 @@ const AdminDashboard: React.FC = () => {
 
     useEffect(() => {
         fetchComplaints();
+
+        // Dynamic updates: poll every 5 seconds
+        const intervalId = setInterval(fetchComplaints, 5000);
+
+        return () => clearInterval(intervalId);
     }, []);
 
     const handleUpdateStatus = async (id: string, status: ComplaintStatus) => {
