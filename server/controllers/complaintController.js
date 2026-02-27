@@ -53,20 +53,12 @@ const getComplaints = async (req, res, next) => {
 };
 
 /**
- * @desc    Update complaint status
+ * @desc    Update complaint
  * @route   PATCH /api/complaints/:id
- * @access  Private/Admin
+ * @access  Private
  */
-const updateComplaintStatus = async (req, res, next) => {
+const updateComplaint = async (req, res, next) => {
     try {
-        const { status } = req.body;
-        const allowedStatuses = ['Pending', 'In Progress', 'Resolved'];
-
-        if (!status || !allowedStatuses.includes(status)) {
-            res.status(400);
-            return next(new Error('Please provide a valid status'));
-        }
-
         const complaint = await Complaint.findById(req.params.id);
 
         if (!complaint) {
@@ -74,10 +66,71 @@ const updateComplaintStatus = async (req, res, next) => {
             return next(new Error('Complaint not found'));
         }
 
-        complaint.status = status;
-        const updatedComplaint = await complaint.save();
+        // Admin can update status
+        if (req.user.role === 'admin') {
+            if (req.body.status) {
+                const allowedStatuses = ['Pending', 'In Progress', 'Resolved'];
+                if (!allowedStatuses.includes(req.body.status)) {
+                    res.status(400);
+                    return next(new Error('Please provide a valid status'));
+                }
+                complaint.status = req.body.status;
+            }
+        } else {
+            // Student can update their own pending complaints
+            if (complaint.createdBy.toString() !== req.user._id.toString()) {
+                res.status(403);
+                return next(new Error('Not authorized to update this complaint'));
+            }
 
+            if (complaint.status !== 'Pending') {
+                res.status(400);
+                return next(new Error('Cannot update complaint after it has been processed'));
+            }
+
+            const { category, description, priority } = req.body;
+            if (category) complaint.category = category;
+            if (description) complaint.description = description;
+            if (priority) complaint.priority = priority;
+        }
+
+        const updatedComplaint = await complaint.save();
         res.status(200).json(updatedComplaint);
+    } catch (error) {
+        next(error);
+    }
+};
+
+/**
+ * @desc    Delete complaint
+ * @route   DELETE /api/complaints/:id
+ * @access  Private
+ */
+const deleteComplaint = async (req, res, next) => {
+    try {
+        const complaint = await Complaint.findById(req.params.id);
+
+        if (!complaint) {
+            res.status(404);
+            return next(new Error('Complaint not found'));
+        }
+
+        // Admin can delete any
+        // Student can delete their own if pending
+        if (req.user.role !== 'admin') {
+            if (complaint.createdBy.toString() !== req.user._id.toString()) {
+                res.status(403);
+                return next(new Error('Not authorized to delete this complaint'));
+            }
+
+            if (complaint.status !== 'Pending') {
+                res.status(400);
+                return next(new Error('Cannot delete complaint after it has been processed'));
+            }
+        }
+
+        await complaint.deleteOne();
+        res.status(200).json({ id: req.params.id });
     } catch (error) {
         next(error);
     }
@@ -86,5 +139,6 @@ const updateComplaintStatus = async (req, res, next) => {
 module.exports = {
     createComplaint,
     getComplaints,
-    updateComplaintStatus,
+    updateComplaint,
+    deleteComplaint,
 };

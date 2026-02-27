@@ -3,7 +3,8 @@ const router = express.Router();
 const {
     createComplaint,
     getComplaints,
-    updateComplaintStatus,
+    updateComplaint,
+    deleteComplaint,
 } = require('../controllers/complaintController');
 const { protect, authorize } = require('../middleware/authMiddleware');
 
@@ -15,6 +16,7 @@ router.route('/')
     .get(getComplaints); // Filtering logic is inside controller
 
 router.route('/:id')
-    .patch(authorize('admin'), updateComplaintStatus);
+    .patch(authorize('student', 'admin'), updateComplaint)
+    .delete(authorize('student', 'admin'), deleteComplaint);
 
 module.exports = router;
